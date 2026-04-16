@@ -17,7 +17,7 @@ public class TransferService {
     private final AccountRepository repo;
 
     @Transactional
-    public void transferSuccess(String fromId, String toId, double amount) {
+    public String transferSuccess(String fromId, String toId, double amount) {
 
         log.info("======== START SUCCESS ========");
 
@@ -31,6 +31,7 @@ public class TransferService {
         repo.save(to);
 
         log.info("======== END SUCCESS ========");
+        return "SUCCESS";
     }
 
     @Transactional

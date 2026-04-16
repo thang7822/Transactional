@@ -1,6 +1,8 @@
 package com.example.rollback.controller;
 
+import com.example.rollback.dto.ApiResponse;
 import com.example.rollback.service.TransferService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,9 +14,11 @@ public class TransferController {
     private final TransferService service;
 
     @PostMapping("/success")
-    public String success() {
-        service.transferSuccess("1", "2", 100);
-        return "SUCCESS";
+    ApiResponse<String> success() {
+        ApiResponse<String> successApi = new ApiResponse<>();
+        successApi.setCode(100);
+        successApi.setResult(service.transferSuccess("1", "2", 100));
+        return successApi;
     }
 
     @PostMapping("/checked")
