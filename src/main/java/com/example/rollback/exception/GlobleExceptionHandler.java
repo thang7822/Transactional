@@ -5,6 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.sql.SQLException;
+
 @RestControllerAdvice
 public class GlobleExceptionHandler {
 
@@ -24,6 +26,16 @@ public class GlobleExceptionHandler {
 
         apiResponse.setCode(ErrorCode.CHECKED_EXCEPTION.getCode());
         apiResponse.setMessage(ErrorCode.CHECKED_EXCEPTION.getMessage());
+
+        return ResponseEntity.badRequest().body(apiResponse);
+    }
+
+    @ExceptionHandler(value = SQLException.class)
+    ResponseEntity<ApiResponse> handlingSQLException(SQLException exception){
+        ApiResponse apiResponse = new ApiResponse();
+
+        apiResponse.setCode(ErrorCode.SQLException.getCode());
+        apiResponse.setMessage(ErrorCode.SQLException.getMessage());
 
         return ResponseEntity.badRequest().body(apiResponse);
     }

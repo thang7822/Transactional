@@ -1,10 +1,9 @@
-package com.example.rollback.entity;
+package com.example.rollback.dto;
 
-import jakarta.persistence.Entity;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-@Entity
+
 @Getter
 @Setter
 @Builder
@@ -14,6 +13,6 @@ import lombok.experimental.FieldDefaults;
 public class TransferInput {
     String from;
     String to;
-    double amount;
+        double amount;
 }
 

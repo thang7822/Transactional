@@ -1,10 +1,11 @@
 package com.example.rollback.controller;
 
 import com.example.rollback.dto.ApiResponse;
-import com.example.rollback.entity.TransferInput;
+import com.example.rollback.dto.TransferInput;
 import com.example.rollback.service.TransferService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,7 +19,7 @@ public class TransferController {
     private final TransferService service;
 
     @PostMapping("/success")
-    ApiResponse<String> success(TransferInput transfer) {
+    ApiResponse<String> success(@RequestBody TransferInput transfer) {
         ApiResponse<String> successApi = new ApiResponse<>();
         successApi.setCode(100);
         successApi.setResult(service.transferSuccess(transfer));
@@ -26,7 +27,7 @@ public class TransferController {
     }
 
     @PostMapping("/no-transaction")
-    ApiResponse<String> testNoTransaction(TransferInput transfer){
+    ApiResponse<String> testNoTransaction(@RequestBody TransferInput transfer){
         ApiResponse<String> NoTransactionApi = new ApiResponse<>();
         NoTransactionApi.setCode(200);
         try {
@@ -38,13 +39,13 @@ public class TransferController {
     }
 
     @PostMapping("/checked")
-    public String checked(TransferInput transfer) throws Exception {
+    public String checked(@RequestBody TransferInput transfer) throws Exception {
         service.transferSuccessButCheckedException(transfer);
         return "CHECKED";
     }
 
     @PostMapping("/runtime")
-    public String runtime(TransferInput transfer) {
+    public String runtime(@RequestBody TransferInput transfer) {
         service.transferFailRollbackRuntime(transfer);
         return "RUNTIME";
     }

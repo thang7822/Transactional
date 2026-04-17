@@ -1,7 +1,7 @@
 package com.example.rollback.service;
 
 import com.example.rollback.entity.Account;
-import com.example.rollback.entity.TransferInput;
+import com.example.rollback.dto.TransferInput;
 import com.example.rollback.exception.CustomException;
 import com.example.rollback.exception.ErrorCode;
 import com.example.rollback.repository.AccountRepository;
@@ -21,7 +21,7 @@ public class TransferService {
     private final AccountRepository repo;
 
     @Transactional
-    public String transferSuccess(@RequestBody TransferInput transfer) {
+    public String transferSuccess( TransferInput transfer) {
 
         log.info("======== START SUCCESS ========");
 
@@ -35,7 +35,7 @@ public class TransferService {
         return "SUCCESS";
     }
 
-    public String transferWithoutTransaction(@RequestBody TransferInput transfer) throws SQLException {
+    public String transferWithoutTransaction( TransferInput transfer) throws SQLException {
         log.info("======== START NO TRANSACTION ========");
 
         Account from = repo.findById(transfer.getFrom()).orElseThrow();
@@ -57,25 +57,27 @@ public class TransferService {
     }
 
     @Transactional
-    public void transferSuccessButCheckedException(@RequestBody TransferInput transfer) throws Exception {
+    public void transferSuccessButCheckedException(TransferInput transfer) throws Exception {
 
-        log.info("======== START TRANSACTION (WRONG CONFIG) ========");
+        log.info("======== START TRANSACTION (DEMO CHECKED EXCEPTION ISSUE) ========");
 
         Account from = repo.findById(transfer.getFrom()).orElseThrow();
         Account to = repo.findById(transfer.getTo()).orElseThrow();
 
         from.setBalance(from.getBalance() - transfer.getAmount());
+        repo.save(from);
 
         boolean isDatabaseError = true;
         if (isDatabaseError) {
-            throw new CustomException(ErrorCode.SQLException);
+            throw new SQLException();
         }
 
         to.setBalance(to.getBalance() + transfer.getAmount());
+        repo.save(to);
     }
 
     @Transactional
-    public void transferFailRollbackRuntime(@RequestBody TransferInput transfer) {
+    public void transferFailRollbackRuntime(TransferInput transfer) {
 
         log.info("======== START RUNTIME (ROLLBACK) ========");
 
@@ -93,7 +95,7 @@ public class TransferService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void transferRollbackChecked(@RequestBody TransferInput transfer) throws Exception {
+    public void transferRollbackChecked( TransferInput transfer) throws Exception {
 
         log.info("======== START TRY-CATCH TRANSACTION ========");
 
@@ -106,8 +108,7 @@ public class TransferService {
 
             repo.flush();
 
-        } catch (CustomException e) {
-            e.getMessage();
+        } catch (Exception e) {
             throw e;
         }
 
