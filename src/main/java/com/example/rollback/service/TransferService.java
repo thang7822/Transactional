@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.SQLException;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -27,28 +29,47 @@ public class TransferService {
         from.setBalance(from.getBalance() - amount);
         to.setBalance(to.getBalance() + amount);
 
-        repo.save(from);
-        repo.save(to);
-
         log.info("======== END SUCCESS ========");
         return "SUCCESS";
     }
 
-    @Transactional
-    public void transferSuccessButCheckedException(String fromId, String toId, double amount) throws Exception {
-
-        log.info("======== START CHECKED (NO ROLLBACK) ========");
+    public String transferWithoutTransaction(String fromId, String toId, double amount) throws SQLException {
+        log.info("======== START NO TRANSACTION ========");
 
         Account from = repo.findById(fromId).orElseThrow();
         Account to = repo.findById(toId).orElseThrow();
 
         from.setBalance(from.getBalance() - amount);
-        to.setBalance(to.getBalance() + amount);
-
         repo.save(from);
+
+        boolean isDatabaseError = true;
+        if (isDatabaseError) {
+            throw new CustomException(ErrorCode.SQLException);
+        }
+
+        to.setBalance(to.getBalance() + amount);
         repo.save(to);
 
-        throw new CustomException(ErrorCode.CHECKED_EXCEPTION);
+        log.info("======== END NO TRANSACTION ========");
+        return "transfer Without Transaction";
+    }
+
+    @Transactional
+    public void transferSuccessButCheckedException(String fromId, String toId, double amount) throws Exception {
+
+        log.info("======== START TRANSACTION (WRONG CONFIG) ========");
+
+        Account from = repo.findById(fromId).orElseThrow();
+        Account to = repo.findById(toId).orElseThrow();
+
+        from.setBalance(from.getBalance() - amount);
+
+        boolean isDatabaseError = true;
+        if (isDatabaseError) {
+            throw new CustomException(ErrorCode.SQLException);
+        }
+
+        to.setBalance(to.getBalance() + amount);
     }
 
     @Transactional
@@ -57,26 +78,38 @@ public class TransferService {
         log.info("======== START RUNTIME (ROLLBACK) ========");
 
         Account from = repo.findById(fromId).orElseThrow();
+        Account to = repo.findById(toId).orElseThrow();
 
         if (from.getBalance() < amount) {
+
             throw new CustomException(ErrorCode.NOT_ENOUGH_MONEY);
         }
+
+        from.setBalance(from.getBalance() - amount);
+        to.setBalance(to.getBalance() + amount);
+
+        log.info("======== END RUNTIME (SUCCESS) ========");
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void transferRollbackChecked(String fromId, String toId, double amount) throws Exception {
 
-        log.info("======== START CHECKED (ROLLBACK) ========");
+        log.info("======== START TRY-CATCH TRANSACTION ========");
 
-        Account from = repo.findById(fromId).orElseThrow();
-        Account to = repo.findById(toId).orElseThrow();
+        try {
+            Account from = repo.findById(fromId).orElseThrow();
+            Account to = repo.findById(toId).orElseThrow();
 
-        from.setBalance(from.getBalance() - amount);
-        to.setBalance(to.getBalance() + amount);
+            from.setBalance(from.getBalance() - amount);
+            to.setBalance(to.getBalance() + amount);
 
-        repo.save(from);
-        repo.save(to);
+            repo.flush();
 
-        throw new CustomException(ErrorCode.CHECKED_ROLLBACK);
+        } catch (CustomException e) {
+            e.getMessage();
+            throw e;
+        }
+
+        log.info("======== END TRY-CATCH TRANSACTION ========");
     }
 }
